@@ -16,7 +16,7 @@ const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        let Token = await AsyncStorage.getItem('token');
+        let Token = await AsyncStorage.getItem('Token');
         if (Token) {
           navigation.replace('Main');
         } else {

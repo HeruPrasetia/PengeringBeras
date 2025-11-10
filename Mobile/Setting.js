@@ -1,6 +1,5 @@
 import React, { Component, Fragment } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import LinearGradient from 'react-native-linear-gradient';
 import { Pesan2 } from './Module';
 import { SocketContext } from './SocketProvider';

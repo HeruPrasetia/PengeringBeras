@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import { Pesan2 } from './Module';
 import { SocketContext } from './SocketProvider';
+import { replace } from './NavigationService';
 
 export default class LoginScreen extends Component {
     static contextType = SocketContext;
@@ -21,6 +22,8 @@ export default class LoginScreen extends Component {
     }
 
     componentDidMount() {
+        let Token = AsyncStorage.getItem("Token");
+        if (Token) replace("Main");
         const { socketData } = this.context;
         this.unsubscribe = this.context;
         this.interval = setInterval(async () => {
