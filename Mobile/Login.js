@@ -91,6 +91,7 @@ export default class LoginScreen extends Component {
                         {/* Login Button */}
                         <TouchableOpacity onPress={this.handleLogin} activeOpacity={0.8} style={styles.loginButtonWrapper}>
                             <View style={styles.loginButton}>
+                                <Image source={require("./assets/login.png")} style={{ width: 16, height: 16 }} />
                                 <Text style={styles.loginButtonText}>Log In</Text>
                             </View>
                         </TouchableOpacity>
@@ -236,8 +237,10 @@ const styles = StyleSheet.create({
         backgroundColor: '#0975f5',
         borderRadius: 12,
         paddingVertical: 16,
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 5
     },
     loginButtonText: {
         color: '#fff',

@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 import LinearGradient from 'react-native-linear-gradient';
 import { Pesan2 } from './Module';
 import { SocketContext } from './SocketProvider';
@@ -23,6 +23,13 @@ export default class LoginScreen extends Component {
             if (socketData) {
                 if (socketData.act === 'data') {
                     this.setState({ Data: socketData.data });
+                } else if (socketData.act == "setting") {
+                    if (socketData.status == "sukses") {
+                        Pesan2(socketData.pesan, "Sukses");
+                        this.props.navigation.replace("Login");
+                    } else {
+                        Pesan2(socketData.pesan, "Gagal", "error");
+                    }
                 }
             }
         }, 500);
@@ -32,18 +39,20 @@ export default class LoginScreen extends Component {
         clearInterval(this.interval);
     }
 
-    handleLogin = async () => {
-        const { Username, Pwd } = this.state;
-        if (!Username || !Pwd) {
-            Pesan2('Username dan password wajib diisi', 'Error', "error");
-            return;
-        }
-        this.setState({ Icons: "loader" });
+    handleSave = async () => {
         const { sendMessage } = this.context;
-        sendMessage({ act: 'login', Username, Pwd });
+        const { Data } = this.state;
+        sendMessage({ act: 'setting', mode: Data.mode, ssid: Data.ssid, pwd: Data.pwd, wifissid: Data.wifissid, wifipwd: Data.wifipwd });
     };
 
+    handleChange(val, obj) {
+        let Data = this.state.Data;
+        Data[obj] = val;
+        this.setState({ Data });
+    }
+
     render() {
+        const { Data } = this.state;
         return (
             <LinearGradient colors={['#F5F0E1', '#0975f5']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -56,34 +65,37 @@ export default class LoginScreen extends Component {
                     <View style={styles.loginCard}>
                         <Text style={styles.title}>Setting</Text>
                         <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Username</Text>
+                            <Text style={styles.label}>Konek Ke Wifi</Text>
                             <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={this.state.Username} onChangeText={(text) => this.setState({ Username: text })} />
+                                <TextInput style={styles.inputText} value={Data.ssid} onChangeText={(text) => this.handleChange(text, "ssid")} />
                             </View>
                         </View>
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>Password</Text>
                             <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={this.state.Pwd} onChangeText={(text) => this.setState({ Pwd: text })} secureTextEntry={this.state.eyeIcon === 'eye-off' ? true : false} />
-                                <TouchableOpacity onPress={() => {
-                                    if (this.state.eyeIcon == "eye-off") {
-                                        this.setState({ eyeIcon: "eye" });
-                                    } else {
-                                        this.setState({ eyeIcon: "eye-off" });
-                                    }
-                                }}>
-                                    <Image source={this.state.eyeIcon == "eye-off" ? require('./assets/eyecoret.png') : require('./assets/eye.png')} style={{ width: 20, height: 20 }} />
-                                </TouchableOpacity>
+                                <TextInput style={styles.inputText} value={Data.pwd} onChangeText={(text) => this.handleChange(text, "pwd")} />
+                            </View>
+                        </View>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Nama SSID</Text>
+                            <View style={styles.inputContainer}>
+                                <TextInput style={styles.inputText} value={Data.wifissid} onChangeText={(text) => this.handleChange(text, "wifissid")} />
+                            </View>
+                        </View>
+                        <View style={styles.inputGroup}>
+                            <Text style={styles.label}>Password</Text>
+                            <View style={styles.inputContainer}>
+                                <TextInput style={styles.inputText} value={Data.wifipwd} onChangeText={(text) => this.handleChange(text, "wifipwd")} />
                             </View>
                         </View>
 
                         {/* Login Button */}
-                        <TouchableOpacity onPress={this.handleLogin} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                        <TouchableOpacity onPress={this.handleSave} activeOpacity={0.8} style={styles.loginButtonWrapper}>
                             <View style={styles.loginButton}>
                                 <Text style={styles.loginButtonText}>Simpan</Text>
                             </View>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={this.handleLogin} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                        <TouchableOpacity onPress={() => this.props.navigation.replace('Login')} activeOpacity={0.8} style={styles.loginButtonWrapper}>
                             <View style={styles.settingButton}>
                                 <Image source={require("./assets/setting.png")} style={{ width: 16, height: 16 }} />
                                 <Text style={styles.loginButtonText}>Batal</Text>
@@ -222,11 +234,14 @@ const styles = StyleSheet.create({
         marginBottom: 25,
     },
     loginButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#0975f5',
         borderRadius: 12,
         paddingVertical: 16,
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 5
     },
     loginButtonText: {
         color: '#fff',

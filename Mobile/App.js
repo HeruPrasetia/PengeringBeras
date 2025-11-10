@@ -8,6 +8,7 @@ import { SocketProvider } from './SocketProvider';
 import Toast from 'react-native-toast-message';
 import Login from './Login';
 import Setting from './Setting';
+import Main from './Main';
 
 const Stack = createNativeStackNavigator();
 
@@ -36,77 +37,6 @@ const SplashScreen = ({ navigation }) => {
     </View>
   );
 };
-
-export class Main extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      log: 'Connecting...',
-      Setting: {}
-    };
-  }
-
-  componentDidMount() {
-    this.ws = new WebSocket('ws://192.168.1.4:81/');
-
-    this.ws.onopen = () => {
-      this.setState({ log: '✅ Connected to Wemos' });
-      this.ws.send(JSON.stringify({ act: "ping" }));
-    };
-
-    this.ws.onmessage = (e) => {
-      try {
-        let data = JSON.parse(e.data);
-        console.log(data);
-        let act = data.act;
-        if (act == "data") {
-          this.setState({ Setting: data.data });
-        } else if (act == "koneksi") {
-          this.setState({ log: data.pesan });
-        } else {
-          this.setState({ log: data.pesan });
-        }
-      } catch (err) {
-        console.log(e.data);
-        this.setState({ log: '❌ ' + e.data });
-      }
-    };
-
-    this.ws.onerror = (e) => {
-      this.setState({ log: '⚠️ Error: ' + e.message });
-    };
-
-    this.ws.onclose = () => {
-      this.setState({ log: '❌ Disconnected' });
-    };
-  }
-
-  sendMsg = () => {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ act: 'data' }));
-    }
-  };
-
-  handleLogout = async () => {
-    await AsyncStorage.clear();
-    replace('Login');
-  };
-
-  render() {
-    const { Setting, log } = this.state;
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>{log}</Text>
-        <Button title="Kirim Pesan" onPress={this.sendMsg} />
-        <Button title="Keluar" onPress={this.handleLogout} />
-        <Text>
-          SSID:{Setting.ssid}
-        </Text>
-        <Toast />
-      </View>
-    );
-  }
-}
 
 export default function App() {
   return (
