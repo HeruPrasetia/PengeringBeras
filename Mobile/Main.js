@@ -1,97 +1,63 @@
 import React, { Component } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { SocketContext } from './SocketProvider';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Toast from 'react-native-toast-message';
+import { Pesan2, api } from './Module';
 
 export default class Home extends Component {
-    static contextType = SocketContext;
-
     constructor(props) {
         super(props);
         this.state = {
             suhu: 0,
             kelembapan: 0,
-            relays: [false, false, false, false],
+            relays: [],
             riwayat: [],
-            mode: "off"
+            mode: "off",
+            lastSocketData: null
         };
     }
 
-    componentDidMount() {
-        this.context.sendMessage({ act: 'data' });
-
-        this.interval = setInterval(() => {
-            const { socketData } = this.context;
-            if (socketData) {
-                switch (socketData.act) {
-                    case 'sensor':
-                        this.setState({
-                            suhu: socketData.suhu,
-                            kelembapan: socketData.kelembapan,
-                            mode:socketData.mode
-                        });
-                        break;
-                    case 'relay_status':
-                        this.setState({ relays: socketData.relays });
-                        break;
-                    case 'riwayat_update':
-                        this.setState({ riwayat: socketData.data });
-                        break;
-                    case 'data':
-                        this.setState({ mode: socketData.data.mode });
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }, 1000);
+    async componentDidMount() {
+        let sql = await api("sensor", {});
+        if (sql.status == "sukses") this.setState({ kelembapan: sql.kelembapan, suhu: sql.suhu, mode: sql.mode, relays: sql.relay }, () => {
+            setInterval(async () => {
+                let sql = await api("sensor", {});
+                console.log(sql);
+                if (sql.status == "sukses") this.setState({ kelembapan: sql.kelembapan, suhu: sql.suhu, mode: sql.mode, relays: sql.relay })
+            }, 10000);
+        });
     }
 
-    componentWillUnmount() {
-        clearInterval(this.interval);
-    }
-
-    toggleRelay = index => {
-        const relays = [...this.state.relays];
-        relays[index] = !relays[index];
-
-        this.context.sendMessage({
-            act: 'relay_control',
-            relay: index + 1,
-            status: relays[index] ? 1 : 0,
-        });
-
-        this.setState({ relays });
-        Toast.show({
-            type: 'info',
-            text1: `Relay ${index + 1} ${relays[index] ? 'ON' : 'OFF'}`,
-        });
+    toggleRelay = async (item) => {
+        let sql = item.status == 1 ? await api("relayoff", { id: item.pin }) : await api("relayon", { id: item.pin });
+        if (sql.status == "sukses") {
+            this.setState({ relays: sql.relay });
+            Pesan2(`Relay ${item.pin} ${item.status == 1 ? 'ON' : 'OFF'}`, "Sukses");
+        }
     };
 
     renderRelayCard = (item, index) => (
         <TouchableOpacity
             key={index}
-            style={[styles.relayCard, { backgroundColor: item ? '#e65c00' : '#555' }]}
-            onPress={() => this.toggleRelay(index)}>
+            style={[styles.relayCard, { backgroundColor: item.status == 1 ? '#e65c00' : '#555' }]}
+            onPress={() => this.toggleRelay(item)}>
             <Icon
-                name={item ? 'flame' : 'flame-outline'}
+                name={item.status == 1 ? 'flame' : 'flame-outline'}
                 size={30}
                 color="#fff"
             />
-            <Text style={styles.relayText}>Relay {index + 1}</Text>
-            <Text style={styles.relayStatus}>{item ? 'ON' : 'OFF'}</Text>
+            <Text style={styles.relayText}>Relay {item.pin}</Text>
+            <Text style={styles.relayStatus}>{item.status == 1 ? 'ON' : 'OFF'}</Text>
         </TouchableOpacity>
     );
 
-    handleProses() {
-        const { sendMessage } = this.context;
+    async handleProses() {
         let { mode } = this.state;
-        if (mode == "off") {
-            sendMessage({ act: "proses", mode: "Proses Berlangsung" });
+        let sql = await api("proses", { mode: mode == "off" ? "Proses Berlangsung" : "off" });
+        if (sql.status == "sukses") {
+            Pesan2(sql.pesan, "Sukses");
         } else {
-            sendMessage({ act: "proses", mode: "off" });
+            Pesan2(sql.pesan, "Gagal");
         }
     }
 
@@ -156,8 +122,6 @@ export default class Home extends Component {
                         ))
                     )}
                 </ScrollView>
-
-                <Toast />
             </LinearGradient>
         );
     }

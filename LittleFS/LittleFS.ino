@@ -2,11 +2,22 @@
 #include <WebSocketsServer_Generic.h>
 #include <ArduinoJson.h>
 #include <LittleFS.h>
-
-#define CONFIG_FILE "/DATA.json"
+#include <DHT11.h>
+#define MQ05 A0
+#define relay1 D0
+#define relay2 D5
+#define relay3 D6
+#define relay4 D7
+#define CONFIG_FILE "/db.json"
 
 WebSocketsServer webSocketServer(81);
 StaticJsonDocument<1024> config;
+DHT11 dht11(4);
+
+unsigned long lastSend = 0;
+const unsigned long sendInterval = 5000;
+unsigned long lastDhtRead = 0;
+int suhu = 0;
 
 // ==============================
 // 📦 FUNGSI: BACA CONFIG
@@ -19,6 +30,8 @@ bool loadConfig() {
     config["pwd"] = "Bissmillah123";
     config["wifissid"] = "mesin_pengering";
     config["wifipwd"] = "1234";
+    config["username"] = "naylatools";
+    config["userpwd"] = "0000";
     config["parameter"] = JsonArray();
     config["data"] = JsonArray();
     config["setting"] = JsonObject();
@@ -57,30 +70,31 @@ bool loadConfig() {
 // 🌐 SETUP WIFI SESUAI MODE
 // ==============================
 void setupWiFi() {
-  String mode = config["mode"].as<String>();
-  if (mode == "server") {
-    Serial.println("📡 Mode: SERVER (Access Point)");
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(
-      config["wifissid"].as<const char*>(),
-      config["wifipwd"].as<const char*>());
-    Serial.print("Access Point IP: ");
-    Serial.println(WiFi.softAPIP());
-  } else {
-    Serial.println("📶 Mode: CLIENT (STA)");
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(
-      config["ssid"].as<const char*>(),
-      config["pwd"].as<const char*>());
-    Serial.print("Connecting to WiFi");
-    while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
-    }
-    Serial.println();
-    Serial.print("Connected! IP: ");
-    Serial.println(WiFi.localIP());
+  WiFi.mode(WIFI_AP_STA);  // 🧩 aktifkan dua mode sekaligus
+
+  // 1️⃣ Koneksi ke WiFi router
+  WiFi.begin(config["ssid"].as<const char*>(), config["pwd"].as<const char*>());
+  Serial.print("Connecting to WiFi");
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {  // timeout 10 detik
+    delay(500);
+    Serial.print(".");
   }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.print("Connected to WiFi! IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Failed to connect as STA.");
+  }
+
+  // 2️⃣ Bikin Access Point juga
+  WiFi.softAP(
+    config["wifissid"].as<const char*>(),
+    config["wifipwd"].as<const char*>());
+  Serial.print("Access Point started! IP: ");
+  Serial.println(WiFi.softAPIP());
 }
 
 // ==============================
@@ -158,10 +172,70 @@ void onWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lengt
           } else {
             webSocketServer.sendTXT(num, "{\"status\":\"gagal\", \"pesan\":\"missing_data_object\"}");
           }
+        } else if (act == "setting") {
+          String ssid = doc["ssid"] | "";
+          String pwd = doc["pwd"] | "";
+          String wifissid = doc["wifissid"] | "";
+          String wifipwd = doc["wifipwd"] | "";
+          config["ssid"] = ssid;
+          config["pwd"] = pwd;
+          config["wifissid"] = wifissid;
+          config["wifipwd"] = wifipwd;
+
+          saveConfig();
+          webSocketServer.sendTXT(num, "{\"status\":\"sukses\",\"pesan\":\"All config replaced\"}");
+        } else if (act == "relayon") {
+          String relay = doc["relay"] | "";
+          const char* cStyleString = relay.c_str();
+          Serial.printf(cStyleString);
+          if (relay == "1") {
+            digitalWrite(relay1, HIGH);
+          } else if (relay == "2") {
+            digitalWrite(relay2, HIGH);
+          } else if (relay == "3") {
+            digitalWrite(relay3, HIGH);
+          } else if (relay == "4") {
+            digitalWrite(relay4, HIGH);
+          }
+
+          webSocketServer.sendTXT(num, "{\"status\":\"sukses\",\"pesan\":\"Berhasil\"}");
+        } else if (act == "relayoff") {
+          String relay = doc["relay"] | "";
+          const char* cStyleString = relay.c_str();
+          Serial.printf(cStyleString);
+          if (relay == "1") {
+            digitalWrite(relay1, LOW);
+          } else if (relay == "2") {
+            digitalWrite(relay2, LOW);
+          } else if (relay == "3") {
+            digitalWrite(relay3, LOW);
+          } else if (relay == "4") {
+            digitalWrite(relay4, LOW);
+          }
+
+          webSocketServer.sendTXT(num, "{\"status\":\"sukses\",\"pesan\":\"Berhasil\"}");
+        } else if (act == "proses") {
+          String mode = doc["mode"] | "off";
+          config["mode"] = mode;
+
+          saveConfig();
+          webSocketServer.sendTXT(num, "{\"status\":\"sukses\",\"pesan\":\"Berhasil\"}");
+        } else if (act == "login") {
+          String Username = doc["Username"] | "";
+          String Pwd = doc["Pwd"] | "";
+          if (Username == config["username"].as<const char*>()) {
+            if (Pwd == config["userpwd"].as<const char*>()) {
+              webSocketServer.sendTXT(num, "{\"status\":\"sukses\", \"act\":\"login\", \"pesan\":\"initoken\"}");
+            } else {
+              webSocketServer.sendTXT(num, "{\"status\":\"gagal\", \"act\":\"login\", \"pesan\":\"Password salah\"}");
+            }
+          } else {
+            webSocketServer.sendTXT(num, "{\"status\":\"gagal\", \"act\":\"login\", \"pesan\":\"Username salah\"}");
+          }
         } else if (act == "ping") {
-          webSocketServer.sendTXT(num, "{\"status\":\"sukses\", \"pong\":true}");
+          webSocketServer.sendTXT(num, "{\"status\":\"sukses\",  \"pong\":true}");
         } else {
-          webSocketServer.sendTXT(num, "{\"status\":\"gagal\", \"pesan\":\"unknown_action\"}");
+          webSocketServer.sendTXT(num, "{\"status\":\"gagal\",  \"pesan\":\"unknown_action\"}");
         }
 
         break;
@@ -182,7 +256,11 @@ void onWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lengt
 void setup() {
   Serial.begin(115200);
   Serial.println();
-
+  pinMode(relay1, OUTPUT);
+  pinMode(relay2, OUTPUT);
+  pinMode(relay3, OUTPUT);
+  pinMode(relay4, OUTPUT);
+  pinMode(MQ05, INPUT);
   if (!LittleFS.begin()) {
     Serial.println("❌ LittleFS mount failed!");
     return;
@@ -208,4 +286,19 @@ void setup() {
 
 void loop() {
   webSocketServer.loop();
+  unsigned long now = millis();
+
+  if (now - lastDhtRead > 5000) {
+    lastDhtRead = now;
+    suhu = dht11.readTemperature();
+  }
+
+  int nilai = analogRead(MQ05);
+  int persen = map(nilai, 1023, 0, 0, 100);
+
+  if (now - lastSend > sendInterval) {
+    lastSend = now;
+    webSocketServer.broadcastTXT(
+      "{\"status\":\"sukses\", \"act\":\"sensor\", \"suhu\":" + String(suhu) + ", \"kelembapan\":" + String(persen) + ", \"mode\":\"" + String(config["mode"].as<const char*>()) + "\"}");
+  }
 }

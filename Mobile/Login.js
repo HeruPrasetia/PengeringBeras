@@ -2,12 +2,10 @@ import React, { Component } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
-import { Pesan2 } from './Module';
-import { SocketContext } from './SocketProvider';
+import { Pesan2, api } from './Module';
 import { replace } from './NavigationService';
 
 export default class LoginScreen extends Component {
-    static contextType = SocketContext;
     constructor(props) {
         super(props);
         this.state = {
@@ -17,34 +15,17 @@ export default class LoginScreen extends Component {
             setIzinLokasi: false,
             Lokasi: "",
             rememberMe: false,
-            eyeIcon: "eye-off"
+            eyeIcon: "eye-off",
+            lastSocketData: null
         };
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         let Token = AsyncStorage.getItem("Token");
         if (Token) replace("Main");
-        const { socketData } = this.context;
-        this.unsubscribe = this.context;
-        this.interval = setInterval(async () => {
-            const { socketData } = this.context;
-            if (socketData) {
-                if (socketData.act === 'login') {
-                    if (socketData.status == "sukses") {
-                        await AsyncStorage.setItem("Token", "BERHASIL");
-                        Pesan2("Login Berhasil", "Berhasil");
-                        this.props.navigation.replace('Main');
-                    } else {
-                        Pesan2(socketData.pesan, "Gagal", "error");
-                    }
-                }
-            }
-        }, 500);
+        let sql = await api("sensor");
     }
 
-    componentWillUnmount() {
-        clearInterval(this.interval);
-    }
 
     handleLogin = async () => {
         const { Username, Pwd } = this.state;
@@ -53,8 +34,14 @@ export default class LoginScreen extends Component {
             return;
         }
         this.setState({ Icons: "loader" });
-        const { sendMessage } = this.context;
-        sendMessage({ act: 'login', Username, Pwd });
+        let sql = await api("login", { Username, Pwd });
+        if (sql.status == "sukses") {
+            await AsyncStorage.setItem("Token", "BERHASIL");
+            Pesan2("Login Berhasil", "Berhasil");
+            this.props.navigation.replace('Main');
+        } else {
+            Pesan2(sql.pesan, "Gagal", "error");
+        }
     };
 
     render() {

@@ -1,4 +1,5 @@
 import Toast from 'react-native-toast-message';
+export const host = "http://192.168.1.9/";
 
 export function Pesan2(Pesan, Judul = "", Jenis = "success", Position = "top") {
     Toast.show({
@@ -62,3 +63,30 @@ export const numberFormat = function (ini) {
     }
     return formatter.format(nmr.toString().replace(/,/g, ""));
 }
+
+export const api = async function (url, data = {}, debug = false) {
+    try {
+        const response = await fetch(`${host}${url}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        const hasil = await response.text();
+
+        if (debug) console.log("API Response:", hasil);
+
+        try {
+            return JSON.parse(hasil);
+        } catch (err) {
+            return { status: "gagal", pesan: "Gagal Koneksi Keserver" };
+        }
+
+    } catch (e) {
+        Alert.alert("Terjadi Kesalahan", "Gagal menghubungi server.");
+        console.log("API Error:", e);
+        return { status: "gagal", pesan: e.message };
+    }
+};

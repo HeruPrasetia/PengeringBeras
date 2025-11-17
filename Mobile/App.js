@@ -4,7 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigationRef, replace } from './NavigationService';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SocketProvider } from './SocketProvider';
 import Toast from 'react-native-toast-message';
 import Login from './Login';
 import Setting from './Setting';
@@ -33,31 +32,29 @@ const SplashScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Image source={require('./assets/splash.png')} style={{ flex: 1, width: '100%', height: '100%', resizeMode: 'cover', }} />
+      <Image source={require('./assets/splash.png')} style={{ flex: 1, width: '100%', height: '100%', resizeMode: 'center', }} />
     </View>
   );
 };
 
 export default function App() {
   return (
-    <SocketProvider>
-      <NavigationContainer ref={navigationRef}>
-        <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="Splash" component={SplashScreen} />
-          <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="Main" component={Main} />
-          <Stack.Screen name="Setting" component={Setting} />
-        </Stack.Navigator>
-        <Toast />
-      </NavigationContainer>
-    </SocketProvider>
+    <NavigationContainer ref={navigationRef}>
+      <Stack.Navigator initialRouteName="Splash" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Main" component={Main} />
+        <Stack.Screen name="Setting" component={Setting} />
+      </Stack.Navigator>
+      <Toast />
+    </NavigationContainer>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#67091D',
+    backgroundColor: '#0975f5',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,47 +1,40 @@
 import React, { Component, Fragment } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { Pesan2 } from './Module';
-import { SocketContext } from './SocketProvider';
+import { Pesan2, api } from './Module';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/Ionicons';
+import Tabs from './Tabs';
 
 export default class LoginScreen extends Component {
-    static contextType = SocketContext;
     constructor(props) {
         super(props);
         this.state = {
-            Data: {}
+            Data: {},
+            Params: [],
+            lastSocketData: null
         };
     }
 
-    componentDidMount() {
-        const { socketData, sendMessage } = this.context;
-        this.unsubscribe = this.context;
-        sendMessage({ act: 'data' });
-        this.interval = setInterval(async () => {
-            const { socketData } = this.context;
-            if (socketData) {
-                if (socketData.act === 'data') {
-                    this.setState({ Data: socketData.data });
-                } else if (socketData.act == "setting") {
-                    if (socketData.status == "sukses") {
-                        Pesan2(socketData.pesan, "Sukses");
-                        this.props.navigation.replace("Login");
-                    } else {
-                        Pesan2(socketData.pesan, "Gagal", "error");
-                    }
-                }
-            }
-        }, 500);
-    }
-
-    componentWillUnmount() {
-        clearInterval(this.interval);
+    async componentDidMount() {
+        let sql = await api("data", {});
+        if (sql.status == "sukses") this.setState({ Data: sql.data, Params: sql.data.parameter });
     }
 
     handleSave = async () => {
-        const { sendMessage } = this.context;
         const { Data } = this.state;
-        sendMessage({ act: 'setting', mode: Data.mode, ssid: Data.ssid, pwd: Data.pwd, wifissid: Data.wifissid, wifipwd: Data.wifipwd });
+        let sql = await api("setting", { mode: Data.mode, ssid: Data.ssid, pwd: Data.pwd, wifissid: Data.wifissid, wifipwd: Data.wifipwd });
+        if (sql.status == "sukses") {
+            Pesan2(sql.pesan, "Berhasil");
+            let Token = AsyncStorage.getItem("Token");
+            if (Token) {
+                this.props.navigation.replace("Main");
+            } else {
+                this.props.navigation.replace("Login");
+            }
+        } else {
+            Pesan2(sql.pesan, "Gagal", "error");
+        }
     };
 
     handleChange(val, obj) {
@@ -51,9 +44,9 @@ export default class LoginScreen extends Component {
     }
 
     render() {
-        const { Data } = this.state;
+        const { Data, Params } = this.state;
         return (
-            <LinearGradient colors={['#F5F0E1', '#0975f5']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
+            <LinearGradient colors={['#0975f5', '#F5F0E1']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
                     <View style={styles.logoSection}>
                         <View style={styles.logoContainer}>
@@ -62,44 +55,80 @@ export default class LoginScreen extends Component {
                         <Text style={styles.logoText}>NayaTools</Text>
                     </View>
                     <View style={styles.loginCard}>
-                        <Text style={styles.title}>Setting</Text>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Konek Ke Wifi</Text>
-                            <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={Data.ssid} onChangeText={(text) => this.handleChange(text, "ssid")} />
-                            </View>
-                        </View>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Password</Text>
-                            <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={Data.pwd} onChangeText={(text) => this.handleChange(text, "pwd")} />
-                            </View>
-                        </View>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Nama SSID</Text>
-                            <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={Data.wifissid} onChangeText={(text) => this.handleChange(text, "wifissid")} />
-                            </View>
-                        </View>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Password</Text>
-                            <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={Data.wifipwd} onChangeText={(text) => this.handleChange(text, "wifipwd")} />
-                            </View>
-                        </View>
+                        <Tabs header={[
+                            { caption: "Setting Koneksi", for: "TabOnline" },
+                            { caption: "Setting System", for: "TabRiwayat" }
+                        ]}>
+                            <View id="TabOnline" style={{ minHeight: "100%", margin: 10 }}>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>Konek Ke Wifi</Text>
+                                    <View style={styles.inputContainer}>
+                                        <TextInput style={styles.inputText} value={Data.ssid} onChangeText={(text) => this.handleChange(text, "ssid")} />
+                                    </View>
+                                </View>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>Password</Text>
+                                    <View style={styles.inputContainer}>
+                                        <TextInput style={styles.inputText} value={Data.pwd} onChangeText={(text) => this.handleChange(text, "pwd")} />
+                                    </View>
+                                </View>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>Nama SSID</Text>
+                                    <View style={styles.inputContainer}>
+                                        <TextInput style={styles.inputText} value={Data.wifissid} onChangeText={(text) => this.handleChange(text, "wifissid")} />
+                                    </View>
+                                </View>
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>Password</Text>
+                                    <View style={styles.inputContainer}>
+                                        <TextInput style={styles.inputText} value={Data.wifipwd} onChangeText={(text) => this.handleChange(text, "wifipwd")} />
+                                    </View>
+                                </View>
 
-                        {/* Login Button */}
-                        <TouchableOpacity onPress={this.handleSave} activeOpacity={0.8} style={styles.loginButtonWrapper}>
-                            <View style={styles.loginButton}>
-                                <Text style={styles.loginButtonText}>Simpan</Text>
+                                <TouchableOpacity onPress={this.handleSave} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                                    <View style={styles.loginButton}>
+                                        <Icon name="save-outline" size={20} color="#fff" />
+                                        <Text style={styles.loginButtonText}>Simpan</Text>
+                                    </View>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => this.props.navigation.replace('Login')} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                                    <View style={styles.settingButton}>
+                                        <Icon name="close-circle-outline" size={20} color="#fff" />
+                                        <Text style={styles.loginButtonText}>Batal</Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => this.props.navigation.replace('Login')} activeOpacity={0.8} style={styles.loginButtonWrapper}>
-                            <View style={styles.settingButton}>
-                                <Image source={require("./assets/setting.png")} style={{ width: 16, height: 16 }} />
-                                <Text style={styles.loginButtonText}>Batal</Text>
+                            <View id="TabRiwayat" style={{ minHeight: "100%", paddingHorizontal: 10 }}>
+                                {
+                                    Params.map((item, i) => {
+                                        return <TouchableOpacity style={styles.card} onPress={(e) => this.props.onPress(e)}>
+                                            <Text style={[styles.category, { textAlign: "center" }]}>{item.nama}</Text>
+                                            <View style={{ flexDirection: "row", gap: 20 }}>
+                                                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <View style={styles.imageContainer}>
+                                                        <Icon name="thermometer" size={30} color="#e65c00" />
+                                                    </View>
+                                                    <View style={{ marginLeft: 10 }}>
+                                                        <Text style={styles.category}>Suhu</Text>
+                                                        <Text style={styles.category}>{item.suhu}</Text>
+                                                    </View>
+                                                </View>
+                                                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <View style={styles.imageContainer}>
+                                                        <Icon name="water" size={30} color="#00aaff" />
+                                                    </View>
+                                                    <View style={{ marginLeft: 10 }}>
+                                                        <Text style={styles.category}>Kelembapan</Text>
+                                                        <Text style={styles.category}>{item.kelembapan}</Text>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    })
+                                }
                             </View>
-                        </TouchableOpacity>
+                        </Tabs>
+
                     </View>
                 </ScrollView>
             </LinearGradient>
@@ -114,13 +143,13 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         flexGrow: 1,
-        paddingVertical: 40,
-        paddingHorizontal: 20,
-        marginTop: 30
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        marginTop: 20
     },
     logoSection: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
     },
     logoContainer: {
         width: 60,
@@ -139,15 +168,16 @@ const styles = StyleSheet.create({
     loginCard: {
         backgroundColor: '#fff',
         borderRadius: 25,
-        padding: 30,
+        padding: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
         elevation: 5,
+        flex: 1
     },
     title: {
-        fontSize: 32,
+        fontSize: 24,
         fontWeight: 'bold',
         color: '#1a1a1a',
         textAlign: 'center',
@@ -169,7 +199,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     inputGroup: {
-        marginBottom: 20,
+        marginBottom: 10,
     },
     label: {
         fontSize: 14,
@@ -181,12 +211,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#F5F5F5',
+        backgroundColor: '#c6daf6ff',
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: Platform.OS == 'ios' && 10,
         borderWidth: 1,
-        borderColor: '#E8E8E8',
+        borderColor: '#6c95f7ff',
         // height: 10
     },
     inputText: {
@@ -230,14 +260,14 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     loginButtonWrapper: {
-        marginBottom: 25,
+        marginBottom: 10,
     },
     loginButton: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#0975f5',
         borderRadius: 12,
-        paddingVertical: 16,
+        paddingVertical: 10,
         alignItems: 'center',
         justifyContent: 'center',
         gap: 5
@@ -252,8 +282,64 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#f509099a',
         borderRadius: 12,
-        paddingVertical: 16,
+        paddingVertical: 10,
         justifyContent: 'center',
         gap: 5
+    },
+
+    card: {
+        backgroundColor: "#fff",
+        borderRadius: 12,
+        padding: 10,
+        marginVertical: 8,
+        shadowColor: "#000",
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 3,
+        marginHorizontal: 10
+    },
+    imageContainer: {
+        position: "relative",
+        alignItems: "center"
+    },
+    image: {
+        width: 50,
+        height: 50,
+        borderRadius: 50,
+    },
+    badge: {
+        position: "absolute",
+        bottom: 8,
+        left: 8,
+        flexDirection: "row",
+        backgroundColor: "red",
+        paddingVertical: 3,
+        paddingHorizontal: 8,
+        borderRadius: 16,
+        alignItems: "center",
+    },
+    badgeText: {
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "bold",
+    },
+    info: {
+        flex: 1,
+        marginLeft: 12,
+        justifyContent: "center",
+    },
+    title: {
+        fontSize: 16,
+        fontWeight: "bold",
+        marginBottom: 2,
+    },
+    category: {
+        fontSize: 16,
+        color: "#1a1a1a"
+    },
+    row: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 2,
     },
 });

@@ -10,7 +10,7 @@ export const SocketProvider = ({ children }) => {
     const socketRef = useRef(null);
 
     useEffect(() => {
-        const socket = new WebSocket('ws://192.168.1.4:81');
+        const socket = new WebSocket('ws://192.168.1.9:81');
         socketRef.current = socket;
 
         socket.onopen = () => console.log('✅ WS connected');
