@@ -8,6 +8,7 @@ import Toast from 'react-native-toast-message';
 import Login from './Login';
 import Setting from './Setting';
 import Main from './Main';
+import Kamera from './Kamera';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,7 @@ export default function App() {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Main" component={Main} />
         <Stack.Screen name="Setting" component={Setting} />
+        <Stack.Screen name="Kamera" component={Kamera} />
       </Stack.Navigator>
       <Toast />
     </NavigationContainer>

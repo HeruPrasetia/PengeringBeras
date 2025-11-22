@@ -72,7 +72,7 @@ export default class Home extends Component {
 
                     <TouchableOpacity
                         style={styles.settingButton}
-                        onPress={() => navigation.navigate('Setting')}>
+                        onPress={() => navigation.navigate('Kamera')}>
                         <Icon name="settings" size={28} color="#fff" />
                     </TouchableOpacity>
                 </View>

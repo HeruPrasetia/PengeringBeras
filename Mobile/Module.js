@@ -1,5 +1,5 @@
 import Toast from 'react-native-toast-message';
-export const host = "http://192.168.1.9/";
+export const host = "http://192.168.1.3/";
 
 export function Pesan2(Pesan, Judul = "", Jenis = "success", Position = "top") {
     Toast.show({
@@ -85,7 +85,7 @@ export const api = async function (url, data = {}, debug = false) {
         }
 
     } catch (e) {
-        Alert.alert("Terjadi Kesalahan", "Gagal menghubungi server.");
+        Pesan2("Terjadi Kesalahan", "Gagal menghubungi server.", "error");
         console.log("API Error:", e);
         return { status: "gagal", pesan: e.message };
     }

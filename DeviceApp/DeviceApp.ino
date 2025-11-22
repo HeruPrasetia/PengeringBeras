@@ -125,6 +125,7 @@ void setup() {
   server.on("/update", HTTP_POST, handleUpdate);
   server.on("/save", HTTP_POST, handleSave);
   server.on("/proses", HTTP_POST, handleProses);
+  server.on("/saveparamater", HTTP_POST, handleUpdateParameter);
 
   server.begin();
   // checkForUpdate();

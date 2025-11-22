@@ -1,5 +1,5 @@
-import React, { Component, Fragment } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform } from 'react-native';
+import React, { Component, Fragment, createRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform, Modal, Button } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Pesan2, api } from './Module';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,7 +12,10 @@ export default class LoginScreen extends Component {
         this.state = {
             Data: {},
             Params: [],
-            lastSocketData: null
+            lastSocketData: null,
+            showModal: false,
+            Detail: {},
+            Idx: 0
         };
     }
 
@@ -43,8 +46,40 @@ export default class LoginScreen extends Component {
         this.setState({ Data });
     }
 
+    handleChangeDetail(val, obj) {
+        let Params = [...this.state.Params];
+        let Idx = this.state.Idx;
+        Params[Idx][obj] = val;
+        this.setState({ Params });
+    }
+
+    async handleSimpanParameter() {
+        let Params = [...this.state.Params];
+        let Idx = this.state.Idx;
+        Params[Idx] = this.state.Detail;
+        let sql = await api("saveparamater", { Params });
+        if (sql.status == "sukses") {
+            Pesan2("Berhasil Update System", "Sukses");
+            this.setState({ showModal: false, Params });
+        } else {
+            Pesan2(sql.pesan, "Gagal", "error");
+        }
+    }
+
+    async handleDeleteProses() {
+        let Idx = this.state.Idx;
+        let Params = [...this.state.Params.filter((item, i) => i != Idx)];
+        let sql = await api("saveparamater", { Params });
+        if (sql.status == "sukses") {
+            Pesan2("Berhasil Update System", "Sukses");
+            this.setState({ showModal: false, Params });
+        } else {
+            Pesan2(sql.pesan, "Gagal", "error");
+        }
+    }
+
     render() {
-        const { Data, Params } = this.state;
+        const { Data, Params, Detail } = this.state;
         return (
             <LinearGradient colors={['#0975f5', '#F5F0E1']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -101,7 +136,7 @@ export default class LoginScreen extends Component {
                             <View id="TabRiwayat" style={{ minHeight: "100%", paddingHorizontal: 10 }}>
                                 {
                                     Params.map((item, i) => {
-                                        return <TouchableOpacity style={styles.card} onPress={(e) => this.props.onPress(e)}>
+                                        return <TouchableOpacity style={styles.card} onPress={(e) => this.setState({ Detail: item, Idx: i, showModal: true })} key={i}>
                                             <Text style={[styles.category, { textAlign: "center" }]}>{item.nama}</Text>
                                             <View style={{ flexDirection: "row", gap: 20 }}>
                                                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -126,11 +161,50 @@ export default class LoginScreen extends Component {
                                         </TouchableOpacity>
                                     })
                                 }
+                                <TouchableOpacity onPress={() => {
+                                    this.setState({ Detail: { nama: "Proses Baru", suhu: 10, kelembapan: 10 }, showModal: true, Idx: this.state.Params.length + 1 })
+                                }} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                                    <View style={styles.loginButton}>
+                                        <Icon name="save-outline" size={20} color="#fff" />
+                                        <Text style={styles.loginButtonText}>Tambah Proses</Text>
+                                    </View>
+                                </TouchableOpacity>
                             </View>
                         </Tabs>
-
                     </View>
                 </ScrollView>
+
+                <Modal animationType="slide" transparent={true} visible={this.state.showModal} onRequestClose={() => this.setState({ showModal: false })}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Nama Proses</Text>
+                                <View style={styles.inputContainer}>
+                                    <TextInput style={styles.inputText} value={Detail.nama} onChangeText={(text) => this.handleChangeDetail(text, "nama")} />
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Nilai Suhu</Text>
+                                <View style={styles.inputContainer}>
+                                    <TextInput style={styles.inputText} keyboardType="numeric" value={String(Detail.suhu)} onChangeText={(text) => this.handleChangeDetail(text, "suhu")} />
+                                </View>
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Nilai Kelembapan</Text>
+                                <View style={styles.inputContainer}>
+                                    <TextInput style={styles.inputText} keyboardType="numeric" value={String(Detail.kelembapan)} onChangeText={(text) => this.handleChangeDetail(text, "kelembapan")} />
+                                </View>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                <Button title="Batal" onPress={() => this.setState({ showModal: false })} color="#FF6347" />
+                                <Button title="Simpan" onPress={() => this.handleSimpanParameter()} color="#0975f5" />
+                                <Button title="Hapus Proses" onPress={() => this.handleDeleteProses()} color="#FF6347" />
+                            </View>
+                        </View>
+                    </View>
+                </Modal>
             </LinearGradient>
         );
     }
@@ -296,7 +370,6 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 3,
-        marginHorizontal: 10
     },
     imageContainer: {
         position: "relative",
@@ -341,5 +414,28 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         marginBottom: 2,
+    },
+
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center', // Pusatkan secara vertikal
+        alignItems: 'center',     // Pusatkan secara horizontal
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Backdrop abu-abu transparan
+    },
+
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+        width: "95%"
     },
 });

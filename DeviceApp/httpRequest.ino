@@ -96,7 +96,7 @@ void handleRelayOff() {
   StaticJsonDocument<256> doc;
   deserializeJson(doc, server.arg("plain"));
   int id = doc["id"];
-  
+
   if (id < 1 || id > 4) {
     server.send(400, "application/json", "{\"status\":\"gagal\",\"pesan\":\"ID invalid " + server.arg("id") + "\"}");
     return;
@@ -135,7 +135,6 @@ void handleRelayOff() {
               "{\"status\":\"sukses\", \"relay\":" + relayJson + "}");
 }
 
-
 void handleUpdate() {
   StaticJsonDocument<512> doc;
   deserializeJson(doc, server.arg("plain"));
@@ -144,6 +143,25 @@ void handleUpdate() {
   String val = doc["value"];
 
   config[key] = val;
+  saveConfig();
+
+  server.send(200, "application/json", "{\"status\":\"sukses\"}");
+}
+
+void handleUpdateParameter() {
+  StaticJsonDocument<1024> incoming;
+  deserializeJson(incoming, server.arg("plain"));
+
+  JsonArray newParams = incoming["Params"].as<JsonArray>();
+
+  config["parameter"].clear();
+
+  for (JsonVariant v : newParams) {
+    if (v) {
+      config["parameter"].add(v);
+    }
+  }
+
   saveConfig();
 
   server.send(200, "application/json", "{\"status\":\"sukses\"}");
