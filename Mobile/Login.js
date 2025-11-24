@@ -1,9 +1,11 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LinearGradient from 'react-native-linear-gradient';
 import { Pesan2, api } from './Module';
 import { replace } from './NavigationService';
+import WifiConnectScreen from './Wifi';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default class LoginScreen extends Component {
     constructor(props) {
@@ -16,14 +18,21 @@ export default class LoginScreen extends Component {
             Lokasi: "",
             rememberMe: false,
             eyeIcon: "eye-off",
-            lastSocketData: null
+            lastSocketData: null,
+            IsConnected: false
         };
     }
 
     async componentDidMount() {
-        let Token = AsyncStorage.getItem("Token");
-        if (Token) replace("Main");
-        let sql = await api("sensor");
+        let Token = await AsyncStorage.getItem("Token");
+        if (Token !== null) replace("Main");
+        let sql = await api("data", {});
+        console.log(sql);
+        if (sql.status == "gagal") {
+            Pesan2("Koneksi gagal", "Gagal", "error");
+        } else {
+            this.setState({ IsConnected: true });
+        }
     }
 
 
@@ -55,42 +64,47 @@ export default class LoginScreen extends Component {
                         <Text style={styles.logoText}>NayaTools</Text>
                     </View>
                     <View style={styles.loginCard}>
-                        <Text style={styles.title}>Login</Text>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Username</Text>
-                            <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={this.state.Username} onChangeText={(text) => this.setState({ Username: text })} />
-                            </View>
-                        </View>
-                        <View style={styles.inputGroup}>
-                            <Text style={styles.label}>Password</Text>
-                            <View style={styles.inputContainer}>
-                                <TextInput style={styles.inputText} value={this.state.Pwd} onChangeText={(text) => this.setState({ Pwd: text })} secureTextEntry={this.state.eyeIcon === 'eye-off' ? true : false} />
-                                <TouchableOpacity onPress={() => {
-                                    if (this.state.eyeIcon == "eye-off") {
-                                        this.setState({ eyeIcon: "eye" });
-                                    } else {
-                                        this.setState({ eyeIcon: "eye-off" });
-                                    }
-                                }}>
-                                    <Image source={this.state.eyeIcon == "eye-off" ? require('./assets/eyecoret.png') : require('./assets/eye.png')} style={{ width: 20, height: 20 }} />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                        {
+                            this.state.IsConnected ?
+                                <Fragment>
+                                    <Text style={styles.title}>Login</Text>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Username</Text>
+                                        <View style={styles.inputContainer}>
+                                            <TextInput style={styles.inputText} value={this.state.Username} onChangeText={(text) => this.setState({ Username: text })} />
+                                        </View>
+                                    </View>
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>Password</Text>
+                                        <View style={styles.inputContainer}>
+                                            <TextInput style={styles.inputText} value={this.state.Pwd} onChangeText={(text) => this.setState({ Pwd: text })} secureTextEntry={this.state.eyeIcon === 'eye-off' ? true : false} />
+                                            <TouchableOpacity onPress={() => {
+                                                if (this.state.eyeIcon == "eye-off") {
+                                                    this.setState({ eyeIcon: "eye" });
+                                                } else {
+                                                    this.setState({ eyeIcon: "eye-off" });
+                                                }
+                                            }}>
+                                                <Image source={this.state.eyeIcon == "eye-off" ? require('./assets/eyecoret.png') : require('./assets/eye.png')} style={{ width: 20, height: 20 }} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
 
-                        {/* Login Button */}
-                        <TouchableOpacity onPress={this.handleLogin} activeOpacity={0.8} style={styles.loginButtonWrapper}>
-                            <View style={styles.loginButton}>
-                                <Image source={require("./assets/login.png")} style={{ width: 16, height: 16 }} />
-                                <Text style={styles.loginButtonText}>Log In</Text>
-                            </View>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => this.props.navigation.replace('Setting')} activeOpacity={0.8} style={styles.loginButtonWrapper}>
-                            <View style={styles.settingButton}>
-                                <Image source={require("./assets/setting.png")} style={{ width: 16, height: 16 }} />
-                                <Text style={styles.loginButtonText}>Setting</Text>
-                            </View>
-                        </TouchableOpacity>
+                                    {/* Login Button */}
+                                    <TouchableOpacity onPress={this.handleLogin} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                                        <View style={styles.loginButton}>
+                                            <Icon name='log-in-outline' size={16} color="#fff" />
+                                            <Text style={styles.loginButtonText}>Log In</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => this.props.navigation.replace('Setting')} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                                        <View style={styles.settingButton}>
+                                            <Icon name='settings-outline' size={16} color="#fff" />
+                                            <Text style={styles.loginButtonText}>Setting</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </Fragment>
+                                : <WifiConnectScreen />}
                     </View>
                 </ScrollView>
             </LinearGradient>

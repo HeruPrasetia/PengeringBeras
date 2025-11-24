@@ -25,18 +25,20 @@ DHT11 dht11(4);
 unsigned long lastDhtRead = 0;
 int suhu = 0;
 unsigned long lastCheck = 0;
+unsigned long lastRuleRun = 0;
+const unsigned long ruleInterval = 1000; 
 
 bool loadConfig() {
   if (!LittleFS.exists(CONFIG_FILE)) {
     config["ssid"] = "GRATIS";
     config["pwd"] = "Bissmillah123";
     config["wifissid"] = "mesin_pengering";
-    config["wifipwd"] = "1234";
+    config["wifipwd"] = "12345678";
     config["username"] = "naylatools";
     config["userpwd"] = "0000";
 
     StaticJsonDocument<256> arrParamDoc;
-    String arrParam = "[{\"nama\":\"Proses pertama\", \"suhu\":40, \"kelembapan\":50},{\"nama\":\"Proses kedua\", \"suhu\":30, \"kelembapan\":20},{\"nama\":\"Proses ketiga\", \"suhu\":25, \"kelembapan\":15}]";
+    String arrParam = "[{\"nama\":\"Proses pertama\", \"suhu\":\"40\", \"kelembapan\":\"50\", \"relay\":\"0\", \"act\":\"on\"},{\"nama\":\"Proses kedua\", \"suhu\":\"30\", \"kelembapan\":\"20\", \"relay\":\"0\",\"act\":\"on\"},{\"nama\":\"Proses ketiga\", \"suhu\":\"25\", \"kelembapan\":\"15\", \"relay\":\"0\",\"act\":\"on\"}]";
     deserializeJson(arrParamDoc, arrParam);
     config["parameter"] = arrParamDoc.as<JsonArray>();
     config["data"] = JsonArray();
@@ -153,9 +155,11 @@ void setup() {
 
 void loop() {
   server.handleClient();
-  ArduinoOTA.handle(); 
-  // if (millis() - lastCheck > 3600000) {
-  //   lastCheck = millis();
-  //   checkForUpdate();
-  // }
+  ArduinoOTA.handle();
+
+  unsigned long now = millis();
+  if (now - lastRuleRun >= 1000) { // 1 detik
+    lastRuleRun = now;
+    runRules();
+  }
 }

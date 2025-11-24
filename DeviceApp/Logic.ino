@@ -1,19 +1,17 @@
+int relays[] = { relay1, relay2, relay3, relay4 };
 
-void applyRule(String action, String Relay) {
-  if (action == "on") {
-    if (Relay == "1") digitalWrite(relay1, HIGH);
-    if (Relay == "2") digitalWrite(relay2, HIGH);
-    if (Relay == "3") digitalWrite(relay3, HIGH);
-    if (Relay == "4") digitalWrite(relay4, HIGH);
-  } else if (action == "off") {
-    if (Relay == "1") digitalWrite(relay1, LOW);
-    if (Relay == "2") digitalWrite(relay2, LOW);
-    if (Relay == "3") digitalWrite(relay3, LOW);
-    if (Relay == "4") digitalWrite(relay4, LOW);
-  }
+void applyRule(String action, int Relay) {
+  digitalWrite(relays[Relay], (action == "on") ? HIGH : LOW);
 }
 
 float getValue(String var) {
+  int nilai = analogRead(MQ05);
+  int kelembaban = map(nilai, 1023, 0, 0, 100);
+
+  if (millis() - lastDhtRead > 5000) {
+    lastDhtRead = millis();
+    suhu = dht11.readTemperature();
+  }
   if (var == "suhu") return suhu;
   if (var == "kelembaban") return kelembaban;
   return 0;
@@ -30,23 +28,46 @@ bool compare(float left, String op, float right) {
 }
 
 void runRules() {
-  StaticJsonDocument<1024> doc;
-  DeserializationError err = deserializeJson(doc, file);
-  file.close();
-  if (err) return;
-
   JsonArray rules = config["parameter"];
+  int nilai = analogRead(MQ05);
+  int kelembaban = map(nilai, 1023, 0, 0, 100);
+  String Mode = config["mode"];
+  if (millis() - lastDhtRead > 5000) {
+    lastDhtRead = millis();
+    suhu = dht11.readTemperature();
+  }
+  if (Mode != "off") {
+    if (Mode == "Proses Berlangsung") {
+      JsonObject firstRule = rules[0];  // Ambil index pertama
+      int relay = firstRule["relay"];
+      String act = firstRule["act"];
+      String Nama = firstRule["nama"];
+      applyRule(act, relay);
+      if (Mode != Nama) {
+        config["mode"] = Nama;
+        saveConfig();
+      }
+      return;  // supaya tidak lanjut ke loop bawah
+    }
 
-  for (JsonObject rule : rules) {
-    String var = rule["var"];
-    String op = rule["op"];
-    float value = rule["value"];
-    String action = rule["action"];
+    for (JsonObject rule : rules) {
+      int ParamSuhu = rule["suhu"];
+      int ParamKelembapan = rule["kelembapan"];
+      int relay = rule["relay"];
+      String act = rule["act"];
+      String Nama = rule["nama"];
 
-    float leftVal = getValue(var);
+      if (suhu < ParamSuhu && kelembaban < ParamKelembapan) {
+        applyRule(act, relay);
+        if (Mode != Nama) {
+          config["mode"] = Nama;
+          saveConfig();
+        }
+      }
 
-    if (compare(leftVal, op, value)) {
-      applyRule(action);
+      // if (compare(leftVal, op, value)) {
+      //   applyRule(action);
+      // }
     }
   }
 }

@@ -1,14 +1,13 @@
-import React, { Component, useEffect, useState } from 'react';
-import { View, Text, Button, StyleSheet, Image } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { navigationRef, replace } from './NavigationService';
+import { navigationRef } from './NavigationService';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Toast from 'react-native-toast-message';
 import Login from './Login';
 import Setting from './Setting';
 import Main from './Main';
-import Kamera from './Kamera';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,7 +16,7 @@ const SplashScreen = ({ navigation }) => {
     const timer = setTimeout(async () => {
       try {
         let Token = await AsyncStorage.getItem('Token');
-        if (Token) {
+        if (Token !== null) {
           navigation.replace('Main');
         } else {
           navigation.replace('Login');
@@ -46,7 +45,6 @@ export default function App() {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Main" component={Main} />
         <Stack.Screen name="Setting" component={Setting} />
-        <Stack.Screen name="Kamera" component={Kamera} />
       </Stack.Navigator>
       <Toast />
     </NavigationContainer>

@@ -1,6 +1,7 @@
 import React, { Component, Fragment, createRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform, Modal, Button } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { Picker } from '@react-native-picker/picker';
 import { Pesan2, api } from './Module';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -83,6 +84,12 @@ export default class LoginScreen extends Component {
         return (
             <LinearGradient colors={['#0975f5', '#F5F0E1']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
+                            <Icon name="arrow-back-outline" size={20} color="#fff" />
+                        </TouchableOpacity>
+                        <Text style={{ fontWeight: 'bold', fontSize: 16, color: "#fff" }}>Kembali</Text>
+                    </View>
                     <View style={styles.logoSection}>
                         <View style={styles.logoContainer}>
                             <Image source={require("./assets/Logo.png")} style={{ width: 40, height: 20 }} />
@@ -126,22 +133,16 @@ export default class LoginScreen extends Component {
                                         <Text style={styles.loginButtonText}>Simpan</Text>
                                     </View>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => this.props.navigation.replace('Login')} activeOpacity={0.8} style={styles.loginButtonWrapper}>
-                                    <View style={styles.settingButton}>
-                                        <Icon name="close-circle-outline" size={20} color="#fff" />
-                                        <Text style={styles.loginButtonText}>Batal</Text>
-                                    </View>
-                                </TouchableOpacity>
                             </View>
                             <View id="TabRiwayat" style={{ minHeight: "100%", paddingHorizontal: 10 }}>
                                 {
                                     Params.map((item, i) => {
                                         return <TouchableOpacity style={styles.card} onPress={(e) => this.setState({ Detail: item, Idx: i, showModal: true })} key={i}>
-                                            <Text style={[styles.category, { textAlign: "center" }]}>{item.nama}</Text>
-                                            <View style={{ flexDirection: "row", gap: 20 }}>
+                                            <Text style={[styles.category, { textAlign: "center", fontWeight: "bold" }]}>{item.nama}</Text>
+                                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                                     <View style={styles.imageContainer}>
-                                                        <Icon name="thermometer" size={30} color="#e65c00" />
+                                                        <Icon name="thermometer" size={20} color="#e65c00" />
                                                     </View>
                                                     <View style={{ marginLeft: 10 }}>
                                                         <Text style={styles.category}>Suhu</Text>
@@ -150,11 +151,20 @@ export default class LoginScreen extends Component {
                                                 </View>
                                                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                                                     <View style={styles.imageContainer}>
-                                                        <Icon name="water" size={30} color="#00aaff" />
+                                                        <Icon name="water" size={20} color="#00aaff" />
                                                     </View>
                                                     <View style={{ marginLeft: 10 }}>
                                                         <Text style={styles.category}>Kelembapan</Text>
                                                         <Text style={styles.category}>{item.kelembapan}</Text>
+                                                    </View>
+                                                </View>
+                                                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                                                    <View style={styles.imageContainer}>
+                                                        <Icon name="power-outline" size={20} color={item.act == "on" ? "#e65c00" : "#00aaff"} />
+                                                    </View>
+                                                    <View style={{ marginLeft: 10 }}>
+                                                        <Text style={styles.category}>Relay</Text>
+                                                        <Text style={styles.category}>Relay {parseInt(item.relay) + 1}</Text>
                                                     </View>
                                                 </View>
                                             </View>
@@ -162,7 +172,7 @@ export default class LoginScreen extends Component {
                                     })
                                 }
                                 <TouchableOpacity onPress={() => {
-                                    this.setState({ Detail: { nama: "Proses Baru", suhu: 10, kelembapan: 10 }, showModal: true, Idx: this.state.Params.length + 1 })
+                                    this.setState({ Detail: { nama: "Proses Baru", suhu: 10, kelembapan: 10, relay: 0, act: "on" }, showModal: true, Idx: this.state.Params.length + 1 })
                                 }} activeOpacity={0.8} style={styles.loginButtonWrapper}>
                                     <View style={styles.loginButton}>
                                         <Icon name="save-outline" size={20} color="#fff" />
@@ -197,6 +207,26 @@ export default class LoginScreen extends Component {
                                     <TextInput style={styles.inputText} keyboardType="numeric" value={String(Detail.kelembapan)} onChangeText={(text) => this.handleChangeDetail(text, "kelembapan")} />
                                 </View>
                             </View>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Relay Yang Dikontrol</Text>
+                                <View style={styles.inputContainer}>
+                                    <Picker selectedValue={Detail.relay} onValueChange={(itemValue) => this.handleChangeDetail(itemValue, "relay")} style={styles.inputText}>
+                                        <Picker.Item style={{ color: "#0975f5" }} label="Silahkan pilih relay" value="" />
+                                        {Data.relay && Data.relay.map((item, index) => (
+                                            <Picker.Item style={{ color: "#0975f5" }} key={index} label={'Relay ' + item.pin} value={index} />
+                                        ))}
+                                    </Picker>
+                                </View>
+                            </View>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Kondisi Relay</Text>
+                                <View style={styles.inputContainer}>
+                                    <Picker selectedValue={Detail.act} onValueChange={(itemValue, index) => this.handleChangeDetail(itemValue, "act")} style={styles.inputText}>
+                                        <Picker.Item style={{ color: "#0975f5" }} label="On" value="on" />
+                                        <Picker.Item style={{ color: "#0975f5" }} label="Off" value="off" />
+                                    </Picker>
+                                </View>
+                            </View>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                                 <Button title="Batal" onPress={() => this.setState({ showModal: false })} color="#FF6347" />
                                 <Button title="Simpan" onPress={() => this.handleSimpanParameter()} color="#0975f5" />
@@ -219,7 +249,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingVertical: 10,
         paddingHorizontal: 10,
-        marginTop: 20
+        marginTop: 10
     },
     logoSection: {
         alignItems: 'center',
@@ -407,7 +437,7 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     category: {
-        fontSize: 16,
+        fontSize: 14,
         color: "#1a1a1a"
     },
     row: {
