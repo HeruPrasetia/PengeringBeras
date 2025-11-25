@@ -18,12 +18,20 @@ export default class Home extends Component {
     }
 
     async componentDidMount() {
+        const now = Math.floor(Date.now() / 1000);
+        const offset = new Date().getTimezoneOffset() * 60 * -1; // detik
+        let sql = await api("setTime", { time: now, offset });
+        console.log(sql);
+        this.handleMain();
+    }
+
+    async handleMain() {
         let sql = await api("sensor", {});
-        if (sql.status == "sukses") this.setState({ kelembapan: sql.kelembapan, suhu: sql.suhu, mode: sql.mode, relays: sql.relay }, () => {
+        if (sql.status == "sukses") this.setState({ kelembapan: sql.kelembapan, suhu: sql.suhu, mode: sql.mode, relays: sql.relay, riwayat: sql.data }, () => {
             setInterval(async () => {
                 let sql = await api("sensor", {});
                 console.log(sql);
-                if (sql.status == "sukses") this.setState({ kelembapan: sql.kelembapan, suhu: sql.suhu, mode: sql.mode, relays: sql.relay })
+                if (sql.status == "sukses") this.setState({ kelembapan: sql.kelembapan, suhu: sql.suhu, mode: sql.mode, relays: sql.relay, riwayat: sql.data })
             }, 10000);
         });
     }
@@ -116,7 +124,7 @@ export default class Home extends Component {
                             <View key={i} style={styles.historyItem}>
                                 <Icon name="time-outline" size={20} color="#fff" />
                                 <Text style={styles.historyText}>
-                                    {r.waktu} — {r.keterangan}
+                                    {r.time} — {r.mode}
                                 </Text>
                             </View>
                         ))

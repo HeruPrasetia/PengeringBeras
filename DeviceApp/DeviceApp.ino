@@ -26,7 +26,9 @@ unsigned long lastDhtRead = 0;
 int suhu = 0;
 unsigned long lastCheck = 0;
 unsigned long lastRuleRun = 0;
-const unsigned long ruleInterval = 1000; 
+const unsigned long ruleInterval = 1000;
+unsigned long GlobalTimestamp = 0;
+unsigned long lastMillis = 0;
 
 bool loadConfig() {
   if (!LittleFS.exists(CONFIG_FILE)) {
@@ -41,8 +43,12 @@ bool loadConfig() {
     String arrParam = "[{\"nama\":\"Proses pertama\", \"suhu\":\"40\", \"kelembapan\":\"50\", \"relay\":\"0\", \"act\":\"on\"},{\"nama\":\"Proses kedua\", \"suhu\":\"30\", \"kelembapan\":\"20\", \"relay\":\"0\",\"act\":\"on\"},{\"nama\":\"Proses ketiga\", \"suhu\":\"25\", \"kelembapan\":\"15\", \"relay\":\"0\",\"act\":\"on\"}]";
     deserializeJson(arrParamDoc, arrParam);
     config["parameter"] = arrParamDoc.as<JsonArray>();
-    config["data"] = JsonArray();
-    
+
+    StaticJsonDocument<256> arrDataDoc;
+    String arrData = "[]";
+    deserializeJson(arrDataDoc, arrData);
+    config["data"] = arrDataDoc.as<JsonArray>();
+
     StaticJsonDocument<256> arrRelayDoc;
     String arrRelay = "[{\"pin\":1, \"status\":0},{\"pin\":2, \"status\":0},{\"pin\":3, \"status\":0},{\"pin\":4, \"status\":0}]";
     deserializeJson(arrRelayDoc, arrRelay);
@@ -75,6 +81,10 @@ bool saveConfig() {
   return true;
 }
 
+unsigned long getCurrentTimestamp() {
+  return GlobalTimestamp + (millis() - lastMillis) / 1000;
+}
+
 void setupWiFi() {
   WiFi.mode(WIFI_AP_STA);
 
@@ -103,6 +113,32 @@ void setupWiFi() {
   Serial.println(WiFi.softAPIP());
 }
 
+void setTimestampFromPhone(unsigned long phoneTime) {
+  GlobalTimestamp = phoneTime;
+  lastMillis = millis();
+}
+
+String getFormattedTime() {
+  time_t now = getCurrentTimestamp();
+  struct tm* timeinfo = localtime(&now);
+
+  char buffer[25];
+  strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", timeinfo);
+  return String(buffer);
+}
+
+void addLog(float suhu, float kelembapan, String mode) {
+  JsonArray data = config["data"].as<JsonArray>(); 
+
+  JsonObject log = data.createNestedObject();
+  log["suhu"] = suhu;
+  log["kelembapan"] = kelembapan;
+  log["mode"] = mode;
+  log["time"] = getFormattedTime();
+
+  saveConfig();
+}
+
 void setup() {
   Serial.begin(115200);
 
@@ -128,6 +164,7 @@ void setup() {
   server.on("/save", HTTP_POST, handleSave);
   server.on("/proses", HTTP_POST, handleProses);
   server.on("/saveparamater", HTTP_POST, handleUpdateParameter);
+  server.on("/setTime", HTTP_POST, handleSetTime);
 
   server.begin();
   // checkForUpdate();
@@ -148,6 +185,7 @@ void setup() {
   ArduinoOTA.onError([](ota_error_t error) {
     Serial.printf("Error[%u]\n", error);
   });
+  setTimestampFromPhone(1763318400);
 
   ArduinoOTA.begin();
   Serial.println("OTA Ready. Akses via Arduino IDE → Port → esp8266-ku.local");
@@ -158,7 +196,7 @@ void loop() {
   ArduinoOTA.handle();
 
   unsigned long now = millis();
-  if (now - lastRuleRun >= 1000) { // 1 detik
+  if (now - lastRuleRun >= 1000) {
     lastRuleRun = now;
     runRules();
   }

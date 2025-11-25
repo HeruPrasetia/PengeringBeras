@@ -19,6 +19,7 @@ void handleSensor() {
   doc["kelembapan"] = persen;
   doc["mode"] = config["mode"];
   doc["relay"] = config["relay"];
+  doc["data"] = config["data"];
 
   String out;
   serializeJson(doc, out);
@@ -131,8 +132,7 @@ void handleRelayOff() {
   String relayJson;
   serializeJson(arr, relayJson);
 
-  server.send(200, "application/json",
-              "{\"status\":\"sukses\", \"relay\":" + relayJson + "}");
+  server.send(200, "application/json", "{\"status\":\"sukses\", \"relay\":" + relayJson + "}");
 }
 
 void handleUpdate() {
@@ -176,9 +176,19 @@ void handleSave() {
 void handleProses() {
   StaticJsonDocument<256> doc;
   deserializeJson(doc, server.arg("plain"));
+  int nilai = analogRead(MQ05);
+  int persen = map(nilai, 1023, 0, 0, 100);
+
+  if (millis() - lastDhtRead > 5000) {
+    lastDhtRead = millis();
+    suhu = dht11.readTemperature();
+  }
+
 
   config["mode"] = doc["mode"].as<String>();
   saveConfig();
+
+  addLog(suhu, persen, doc["mode"].as<String>());
 
   server.send(200, "application/json", "{\"status\":\"sukses\", \"pesan\":\"Berhasil ganti proses\"}");
 }
@@ -204,4 +214,12 @@ void handleSetting() {
 
   saveConfig();
   server.send(200, "application/json", "{\"status\":\"sukses\", \"pesan\":\"Berhasil Edit Setting\"}");
+}
+
+void handleSetTime() {
+  StaticJsonDocument<128> doc;
+  deserializeJson(doc, server.arg("plain"));
+  unsigned long t = doc["time"].as<unsigned long>();
+  setTimestampFromPhone(t);
+  server.send(200, "application/json", "{\"status\":\"sukses\"}");
 }

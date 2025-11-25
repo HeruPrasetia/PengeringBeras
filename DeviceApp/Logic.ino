@@ -38,7 +38,7 @@ void runRules() {
   }
   if (Mode != "off") {
     if (Mode == "Proses Berlangsung") {
-      JsonObject firstRule = rules[0];  // Ambil index pertama
+      JsonObject firstRule = rules[0];
       int relay = firstRule["relay"];
       String act = firstRule["act"];
       String Nama = firstRule["nama"];
@@ -46,8 +46,8 @@ void runRules() {
       if (Mode != Nama) {
         config["mode"] = Nama;
         saveConfig();
+        addLog(suhu, kelembaban, Nama);
       }
-      return;  // supaya tidak lanjut ke loop bawah
     }
 
     for (JsonObject rule : rules) {
@@ -62,12 +62,9 @@ void runRules() {
         if (Mode != Nama) {
           config["mode"] = Nama;
           saveConfig();
+          addLog(suhu, kelembaban, Nama);
         }
       }
-
-      // if (compare(leftVal, op, value)) {
-      //   applyRule(action);
-      // }
     }
   }
 }
