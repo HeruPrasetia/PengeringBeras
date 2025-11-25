@@ -63,6 +63,8 @@ export default class Home extends Component {
         let { mode } = this.state;
         let sql = await api("proses", { mode: mode == "off" ? "Proses Berlangsung" : "off" });
         if (sql.status == "sukses") {
+            let Mode = mode == "off" ? "Proses Berlangsung" : "off";
+            this.setState({ mode: Mode });
             Pesan2(sql.pesan, "Sukses");
         } else {
             Pesan2(sql.pesan, "Gagal");
@@ -129,6 +131,7 @@ export default class Home extends Component {
                             </View>
                         ))
                     )}
+                    <View style={{ marginBottom: 100 }} />
                 </ScrollView>
             </LinearGradient>
         );

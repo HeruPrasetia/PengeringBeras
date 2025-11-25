@@ -79,6 +79,12 @@ export default class LoginScreen extends Component {
         }
     }
 
+    handleAddParams() {
+        let Params = [...this.state.Params];
+        Params.push({ nama: "Proses Baru", suhu: 10, kelembapan: 10, relay: 0, act: "on" })
+        this.setState({ Params })
+    }
+
     render() {
         const { Data, Params, Detail } = this.state;
         return (
@@ -171,9 +177,7 @@ export default class LoginScreen extends Component {
                                         </TouchableOpacity>
                                     })
                                 }
-                                <TouchableOpacity onPress={() => {
-                                    this.setState({ Detail: { nama: "Proses Baru", suhu: 10, kelembapan: 10, relay: 0, act: "on" }, showModal: true, Idx: this.state.Params.length + 1 })
-                                }} activeOpacity={0.8} style={styles.loginButtonWrapper}>
+                                <TouchableOpacity onPress={() => this.handleAddParams()} activeOpacity={0.8} style={styles.loginButtonWrapper}>
                                     <View style={styles.loginButton}>
                                         <Icon name="save-outline" size={20} color="#fff" />
                                         <Text style={styles.loginButtonText}>Tambah Proses</Text>
@@ -188,7 +192,7 @@ export default class LoginScreen extends Component {
                     <View style={styles.centeredView}>
                         <View style={styles.modalView}>
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Nama Proses</Text>
+                                <Text style={styles.label}>Nama Proses {this.state.Idx}</Text>
                                 <View style={styles.inputContainer}>
                                     <TextInput style={styles.inputText} value={Detail.nama} onChangeText={(text) => this.handleChangeDetail(text, "nama")} />
                                 </View>
