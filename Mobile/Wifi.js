@@ -16,7 +16,8 @@ class WifiConnectScreen extends Component {
         this.state = {
             ssid: "mesin_pengering",
             password: "12345678",
-            isConnecting: false
+            isConnecting: false,
+            wifiList: []
         };
     }
 
@@ -39,7 +40,7 @@ class WifiConnectScreen extends Component {
 
         this.setState({ isConnecting: true });
 
-        WifiManager.connectToProtectedSSID(this.state.ssid, this.state.password, false)
+        WifiManager.connectToProtectedSSID(this.state.ssid, this.state.password, false, false)
             .then(() => {
                 Alert.alert("Success", "Berhasil konek ke WiFi " + this.state.ssid);
                 this.setState({ isConnecting: false });
@@ -50,6 +51,22 @@ class WifiConnectScreen extends Component {
             });
     }
 
+
+    scanWifi = async () => {
+        const perm = await this.requestPermission();
+        if (!perm) {
+            alert("Izin lokasi ditolak!");
+            return;
+        }
+
+        try {
+            const result = await WifiManager.loadWifiList();
+            this.setState({ wifiList: JSON.parse(result) });
+        } catch (e) {
+            console.log("Scan error:", e);
+        }
+    };
+
     render() {
         return (
             <View style={{ padding: 20 }}>
@@ -57,10 +74,7 @@ class WifiConnectScreen extends Component {
                 <Text>SSID: {this.state.ssid}</Text>
                 <Text>Password: {this.state.password}</Text>
 
-                <Button
-                    title={this.state.isConnecting ? "Menghubungkan..." : "Sambungkan Langsung Kedevice"}
-                    onPress={this.connectToWifi}
-                />
+                <Button title={this.state.isConnecting ? "Menghubungkan..." : "Cari Device"} onPress={this.connectToWifi} />
             </View>
         );
     }

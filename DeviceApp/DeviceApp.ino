@@ -38,6 +38,7 @@ bool loadConfig() {
     config["wifipwd"] = "12345678";
     config["username"] = "naylatools";
     config["userpwd"] = "0000";
+    config["kalibrasi"] = "0";
 
     StaticJsonDocument<256> arrParamDoc;
     String arrParam = "[{\"nama\":\"Proses pertama\", \"suhu\":\"40\", \"kelembapan\":\"50\", \"relay\":\"0\", \"act\":\"on\"},{\"nama\":\"Proses kedua\", \"suhu\":\"30\", \"kelembapan\":\"20\", \"relay\":\"0\",\"act\":\"on\"},{\"nama\":\"Proses ketiga\", \"suhu\":\"25\", \"kelembapan\":\"15\", \"relay\":\"0\",\"act\":\"on\"}]";

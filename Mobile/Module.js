@@ -1,4 +1,5 @@
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export const host = "http://192.168.1.3/";
 
 export function Pesan2(Pesan, Judul = "", Jenis = "success", Position = "top") {
@@ -66,7 +67,8 @@ export const numberFormat = function (ini) {
 
 export const api = async function (url, data = {}, debug = false) {
     try {
-        const response = await fetch(`${host}${url}`, {
+        let Host = await AsyncStorage.getItem("host") || host;
+        const response = await fetch(`${Host}${url}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -81,11 +83,11 @@ export const api = async function (url, data = {}, debug = false) {
         try {
             return JSON.parse(hasil);
         } catch (err) {
-            return { status: "gagal", pesan: "Gagal Koneksi Keserver" };
+            return { status: "gagal", pesan: "Gagal Koneksi Device" };
         }
 
     } catch (e) {
-        Pesan2("Terjadi Kesalahan", "Gagal menghubungi server.", "error");
+        Pesan2("Terjadi Kesalahan", "Gagal menghubungi Device.", "error");
         console.log("API Error:", e);
         return { status: "gagal", pesan: e.message };
     }

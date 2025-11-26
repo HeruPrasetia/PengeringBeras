@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Pesan2, api } from './Module';
+import FastImage from 'react-native-fast-image';
 
 export default class Home extends Component {
     constructor(props) {
@@ -86,6 +87,12 @@ export default class Home extends Component {
                         <Icon name="settings" size={28} color="#fff" />
                     </TouchableOpacity>
                 </View>
+
+                <FastImage
+                    style={{ width: 100, height: 100, marginTop: 20 }}
+                    source={require('./assets/running.gif')}
+                    resizeMode={FastImage.resizeMode.contain}
+                />
 
                 <View style={styles.sensorContainer}>
                     <View style={styles.card}>

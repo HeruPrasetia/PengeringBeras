@@ -27,7 +27,7 @@ export default class LoginScreen extends Component {
 
     handleSave = async () => {
         const { Data } = this.state;
-        let sql = await api("setting", { mode: Data.mode, ssid: Data.ssid, pwd: Data.pwd, wifissid: Data.wifissid, wifipwd: Data.wifipwd });
+        let sql = await api("setting", { mode: Data.mode, ssid: Data.ssid, pwd: Data.pwd, wifissid: Data.wifissid, wifipwd: Data.wifipwd, kalibrasi: Data.kalibrasi });
         if (sql.status == "sukses") {
             Pesan2(sql.pesan, "Berhasil");
             let Token = AsyncStorage.getItem("Token");
@@ -90,11 +90,23 @@ export default class LoginScreen extends Component {
         return (
             <LinearGradient colors={['#0975f5', '#F5F0E1']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                        <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-                            <Icon name="arrow-back-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
-                        <Text style={{ fontWeight: 'bold', fontSize: 16, color: "#fff" }}>Kembali</Text>
+                    <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                    }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
+                                <Icon name="arrow-back-outline" size={20} color="#fff" />
+                            </TouchableOpacity>
+                            <Text style={{ fontWeight: 'bold', fontSize: 16, color: "#fff" }}>Kembali</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                            <Text style={{ fontWeight: 'bold', fontSize: 16, color: "#FF6347" }}>Keluar</Text>
+                            <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
+                                <Icon name="log-out" size={20} color="#FF6347" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                     <View style={styles.logoSection}>
                         <View style={styles.logoContainer}>
@@ -104,10 +116,10 @@ export default class LoginScreen extends Component {
                     </View>
                     <View style={styles.loginCard}>
                         <Tabs header={[
-                            { caption: "Setting Koneksi", for: "TabOnline" },
+                            { caption: "Setting General", for: "TabOnline" },
                             { caption: "Setting System", for: "TabRiwayat" }
                         ]}>
-                            <View id="TabOnline" style={{ minHeight: "100%", margin: 10 }}>
+                            <ScrollView id="TabOnline" style={{ minHeight: "100%", margin: 10 }} showsVerticalScrollIndicator={false}>
                                 <View style={styles.inputGroup}>
                                     <Text style={styles.label}>Konek Ke Wifi</Text>
                                     <View style={styles.inputContainer}>
@@ -133,14 +145,21 @@ export default class LoginScreen extends Component {
                                     </View>
                                 </View>
 
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>Kalibarasi Kelembapan</Text>
+                                    <View style={styles.inputContainer}>
+                                        <TextInput style={styles.inputText} keyboardType="numeric" value={Data.kalibrasi} onChangeText={(text) => this.handleChange(text, "kalibrasi")} />
+                                    </View>
+                                </View>
+
                                 <TouchableOpacity onPress={this.handleSave} activeOpacity={0.8} style={styles.loginButtonWrapper}>
                                     <View style={styles.loginButton}>
                                         <Icon name="save-outline" size={20} color="#fff" />
                                         <Text style={styles.loginButtonText}>Simpan</Text>
                                     </View>
                                 </TouchableOpacity>
-                            </View>
-                            <View id="TabRiwayat" style={{ minHeight: "100%", paddingHorizontal: 10 }}>
+                            </ScrollView>
+                            <ScrollView id="TabRiwayat" style={{ minHeight: "100%", paddingHorizontal: 10 }} showsVerticalScrollIndicator={false}>
                                 {
                                     Params.map((item, i) => {
                                         return <TouchableOpacity style={styles.card} onPress={(e) => this.setState({ Detail: item, Idx: i, showModal: true })} key={i}>
@@ -183,7 +202,7 @@ export default class LoginScreen extends Component {
                                         <Text style={styles.loginButtonText}>Tambah Proses</Text>
                                     </View>
                                 </TouchableOpacity>
-                            </View>
+                            </ScrollView>
                         </Tabs>
                     </View>
                 </ScrollView>
@@ -239,7 +258,7 @@ export default class LoginScreen extends Component {
                         </View>
                     </View>
                 </Modal>
-            </LinearGradient>
+            </LinearGradient >
         );
     }
 }

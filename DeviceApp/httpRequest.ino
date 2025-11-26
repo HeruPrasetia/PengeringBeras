@@ -33,6 +33,7 @@ void handleLogin() {
   String u = doc["Username"];
   String p = doc["Pwd"];
 
+
   StaticJsonDocument<128> reply;
 
   if (u == config["username"].as<String>() && p == config["userpwd"].as<String>()) {
@@ -40,6 +41,10 @@ void handleLogin() {
     reply["act"] = "login";
     reply["pesan"] = "initoken";
   } else {
+    Serial.println("User : " + config["username"].as<String>());
+    Serial.println("Pwd : " + config["userpwd"].as<String>());
+    Serial.println("Users : " + u);
+    Serial.println("Pwds : " + p);
     reply["status"] = "gagal";
     reply["act"] = "login";
     reply["pesan"] = "Username atau password salah";
@@ -207,10 +212,12 @@ void handleSetting() {
   String pwd = doc["pwd"] | "";
   String wifissid = doc["wifissid"] | "";
   String wifipwd = doc["wifipwd"] | "";
+  String kalibrasi = doc["kalibrasi"] | "0";
   config["ssid"] = ssid;
   config["pwd"] = pwd;
   config["wifissid"] = wifissid;
   config["wifipwd"] = wifipwd;
+  config["kalibrasi"] = kalibrasi;
 
   saveConfig();
   server.send(200, "application/json", "{\"status\":\"sukses\", \"pesan\":\"Berhasil Edit Setting\"}");
