@@ -88,12 +88,6 @@ export default class Home extends Component {
                     </TouchableOpacity>
                 </View>
 
-                <FastImage
-                    style={{ width: 100, height: 100, marginTop: 20 }}
-                    source={require('./assets/running.gif')}
-                    resizeMode={FastImage.resizeMode.contain}
-                />
-
                 <View style={styles.sensorContainer}>
                     <View style={styles.card}>
                         <Icon name="thermometer" size={40} color="#e65c00" />
@@ -114,7 +108,11 @@ export default class Home extends Component {
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.button}>
-                        <Icon name={mode == "off" ? "flame-outline" : "flame"} size={26} color="#fff" style={{ marginRight: 10 }} />
+                        {mode == 'off' ? <Icon name={mode == "off" ? "flame-outline" : "flame"} size={26} color="#fff" style={{ marginRight: 10 }} /> : <FastImage
+                            style={{ width: 100, height: 100, marginTop: 20 }}
+                            source={require('./assets/running.gif')}
+                            resizeMode={FastImage.resizeMode.contain}
+                        />}
                         <Text style={styles.text}>{mode == "off" ? "Mulai Pengeringan" : mode}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
