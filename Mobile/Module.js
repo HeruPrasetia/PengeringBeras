@@ -1,18 +1,18 @@
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-export const host = "http://192.168.1.3/";
+export const host = "http://192.168.1.6/";
 
-export function Pesan2(Pesan, Judul = "", Jenis = "success", Position = "top") {
+export function Pesan2(pesan, Judul = "", Jenis = "success", Position = "top") {
     Toast.show({
         type: Jenis,
         text1: Judul,
-        text2: Pesan,
+        text2: pesan,
         position: Position
     });
 }
 
-export function Pesan(Pesan, Judul = "", Jenis = "success") {
-    Alert.alert(Judul, Pesan);
+export function Pesan(pesan, Judul = "", Jenis = "success") {
+    Alert.alert(Judul, pesan);
 }
 
 export const formatTanggal = (date) => {
@@ -68,7 +68,7 @@ export const numberFormat = function (ini) {
 export const api = async function (url, data = {}, debug = false) {
     try {
         let Host = await AsyncStorage.getItem("host") || host;
-        const response = await fetch(`${Host}${url}`, {
+        const response = await fetch(`http://${Host}/${url}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

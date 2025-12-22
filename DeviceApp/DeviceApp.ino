@@ -13,7 +13,7 @@
 #define relay2 D5
 #define relay3 D6
 #define relay4 D7
-#define CONFIG_FILE "/db.json"
+#define CONFIG_FILE "/database.json"
 #define CURRENT_VERSION "1.0.0"
 #define VERSION_URL "http://iot.naylatools.com/versions.txt"
 #define UPDATE_URL "http://iot.naylatools.com/update.bin"
@@ -32,8 +32,8 @@ unsigned long lastMillis = 0;
 
 bool loadConfig() {
   if (!LittleFS.exists(CONFIG_FILE)) {
-    config["ssid"] = "GRATIS";
-    config["pwd"] = "Bissmillah123";
+    config["ssid"] = "Anerira";
+    config["pwd"] = "naylatools.com";
     config["wifissid"] = "mesin_pengering";
     config["wifipwd"] = "12345678";
     config["username"] = "naylatools";
@@ -90,6 +90,7 @@ void setupWiFi() {
   WiFi.mode(WIFI_AP_STA);
 
   // STA
+  Serial.print("Menghubungkan ke : " + config["ssid"].as<String>());
   WiFi.begin(
     config["ssid"].as<String>(),
     config["pwd"].as<String>());
@@ -104,6 +105,8 @@ void setupWiFi() {
   if (WiFi.status() == WL_CONNECTED) {
     Serial.print("Connected! IP: ");
     Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("Gagal Menghubungkan : " + WiFi.status());
   }
 
   // AP
@@ -129,7 +132,7 @@ String getFormattedTime() {
 }
 
 void addLog(float suhu, float kelembapan, String mode) {
-  JsonArray data = config["data"].as<JsonArray>(); 
+  JsonArray data = config["data"].as<JsonArray>();
 
   JsonObject log = data.createNestedObject();
   log["suhu"] = suhu;
@@ -166,6 +169,10 @@ void setup() {
   server.on("/proses", HTTP_POST, handleProses);
   server.on("/saveparamater", HTTP_POST, handleUpdateParameter);
   server.on("/setTime", HTTP_POST, handleSetTime);
+  server.on("/ipstatus", []() {
+    String message = "{\"status\":\"sukses\",\"pesan\":\"" + WiFi.localIP().toString() + "\"}";
+    server.send(200, "application/json", message);
+  });
 
   server.begin();
   // checkForUpdate();

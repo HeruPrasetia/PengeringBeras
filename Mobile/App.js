@@ -15,6 +15,12 @@ const SplashScreen = ({ navigation }) => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
+        let host = await AsyncStorage.getItem('host');
+        if (host === null) {
+          navigation.replace('Setting');
+          return;
+        }
+
         let Token = await AsyncStorage.getItem('Token');
         if (Token !== null) {
           navigation.replace('Main');
@@ -22,7 +28,7 @@ const SplashScreen = ({ navigation }) => {
           navigation.replace('Login');
         }
       } catch (e) {
-        console.log("Error baca token:", e);
+        console.log("Error baca storage:", e);
         navigation.replace('Login');
       }
     }, 2000);

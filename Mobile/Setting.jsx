@@ -1,4 +1,4 @@
-import React, { Component, Fragment, createRef } from 'react';
+import React, { Component } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image, Platform, Modal, Button } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { Picker } from '@react-native-picker/picker';
@@ -16,21 +16,50 @@ export default class LoginScreen extends Component {
             lastSocketData: null,
             showModal: false,
             Detail: {},
-            Idx: 0
+            Idx: 0,
+            hostIP: ''
         };
     }
 
     async componentDidMount() {
+        let hostIP = await AsyncStorage.getItem("host") || "";
+        this.setState({ hostIP });
         let sql = await api("data", {});
         if (sql.status == "sukses") this.setState({ Data: sql.data, Params: sql.data.parameter });
     }
 
+    handleBack = async () => {
+        const { navigation } = this.props;
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        } else {
+            let Token = await AsyncStorage.getItem("Token");
+            if (Token) {
+                navigation.replace("Main");
+            } else {
+                navigation.replace("Login");
+            }
+        }
+    }
+
+    handleLogout = async () => {
+        await AsyncStorage.removeItem("Token");
+        this.props.navigation.replace("Login");
+    };
+
     handleSave = async () => {
-        const { Data } = this.state;
+        const { Data, hostIP } = this.state;
+        if (!hostIP) {
+            Pesan2("IP Device harus diisi", "Gagal", "error");
+            return;
+        }
+
+        await AsyncStorage.setItem("host", hostIP);
+
         let sql = await api("setting", { mode: Data.mode, ssid: Data.ssid, pwd: Data.pwd, wifissid: Data.wifissid, wifipwd: Data.wifipwd, kalibrasi: Data.kalibrasi });
         if (sql.status == "sukses") {
             Pesan2(sql.pesan, "Berhasil");
-            let Token = AsyncStorage.getItem("Token");
+            let Token = await AsyncStorage.getItem("Token");
             if (Token) {
                 this.props.navigation.replace("Main");
             } else {
@@ -90,23 +119,15 @@ export default class LoginScreen extends Component {
         return (
             <LinearGradient colors={['#0975f5', '#F5F0E1']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={styles.background}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-                    <View style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                    }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                            <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-                                <Icon name="arrow-back-outline" size={20} color="#fff" />
-                            </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <TouchableOpacity onPress={this.handleBack} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, padding: 5 }}>
+                            <Icon name="arrow-back-outline" size={20} color="#fff" />
                             <Text style={{ fontWeight: 'bold', fontSize: 16, color: "#fff" }}>Kembali</Text>
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={this.handleLogout} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, padding: 5 }}>
                             <Text style={{ fontWeight: 'bold', fontSize: 16, color: "#FF6347" }}>Keluar</Text>
-                            <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-                                <Icon name="log-out" size={20} color="#FF6347" />
-                            </TouchableOpacity>
-                        </View>
+                            <Icon name="log-out" size={20} color="#FF6347" />
+                        </TouchableOpacity>
                     </View>
                     <View style={styles.logoSection}>
                         <View style={styles.logoContainer}>
@@ -142,6 +163,13 @@ export default class LoginScreen extends Component {
                                     <Text style={styles.label}>Password</Text>
                                     <View style={styles.inputContainer}>
                                         <TextInput style={styles.inputText} value={Data.wifipwd} onChangeText={(text) => this.handleChange(text, "wifipwd")} />
+                                    </View>
+                                </View>
+
+                                <View style={styles.inputGroup}>
+                                    <Text style={styles.label}>IP Device (Host)</Text>
+                                    <View style={styles.inputContainer}>
+                                        <TextInput style={styles.inputText} placeholder="Contoh: http://192.168.1.3/" value={this.state.hostIP} onChangeText={(text) => this.setState({ hostIP: text })} />
                                     </View>
                                 </View>
 
@@ -391,7 +419,6 @@ const styles = StyleSheet.create({
     },
     loginButton: {
         flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: '#0975f5',
         borderRadius: 12,
         paddingVertical: 10,
@@ -454,7 +481,7 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         justifyContent: "center",
     },
-    title: {
+    titleCard: {
         fontSize: 16,
         fontWeight: "bold",
         marginBottom: 2,

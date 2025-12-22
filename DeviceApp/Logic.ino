@@ -29,8 +29,9 @@ bool compare(float left, String op, float right) {
 
 void runRules() {
   JsonArray rules = config["parameter"];
+  int Kalibrasi = config["kalibrasi"];
   int nilai = analogRead(MQ05);
-  int kelembaban = map(nilai, 1023, 0, 0, 100);
+  int kelembaban = map(nilai, 1023, 0, 0, 100) + Kalibrasi;
   String Mode = config["mode"];
   if (millis() - lastDhtRead > 5000) {
     lastDhtRead = millis();
@@ -57,7 +58,7 @@ void runRules() {
       String act = rule["act"];
       String Nama = rule["nama"];
 
-      if (suhu < ParamSuhu && kelembaban < ParamKelembapan) {
+      if (kelembaban < ParamKelembapan) {
         applyRule(act, relay);
         if (Mode != Nama) {
           config["mode"] = Nama;

@@ -4,9 +4,9 @@
 
 void handleSensor() {
   StaticJsonDocument<256> doc;
-
+  int Kalibrasi = config["kalibrasi"];
   int nilai = analogRead(MQ05);
-  int persen = map(nilai, 1023, 0, 0, 100);
+  int persen = map(nilai, 1023, 0, 0, 100) + Kalibrasi;
 
   if (millis() - lastDhtRead > 5000) {
     lastDhtRead = millis();

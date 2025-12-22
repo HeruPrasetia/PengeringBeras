@@ -24,12 +24,17 @@ export default class LoginScreen extends Component {
     }
 
     async componentDidMount() {
+        this.refreshConnection();
+    }
+
+    refreshConnection = async () => {
         let Token = await AsyncStorage.getItem("Token");
         if (Token !== null) replace("Main");
         let sql = await api("data", {});
-        console.log(sql);
+        console.log("Connection check:", sql);
         if (sql.status == "gagal") {
             Pesan2("Koneksi gagal", "Gagal", "error");
+            this.setState({ IsConnected: false });
         } else {
             this.setState({ IsConnected: true });
         }
@@ -104,7 +109,7 @@ export default class LoginScreen extends Component {
                                         </View>
                                     </TouchableOpacity>
                                 </Fragment>
-                                : <WifiConnectScreen />}
+                                : <WifiConnectScreen onRefresh={() => this.refreshConnection()} />}
                     </View>
                 </ScrollView>
             </LinearGradient>

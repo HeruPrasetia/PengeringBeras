@@ -21,8 +21,7 @@ export default class Home extends Component {
     async componentDidMount() {
         const now = Math.floor(Date.now() / 1000);
         const offset = new Date().getTimezoneOffset() * 60 * -1; // detik
-        let sql = await api("setTime", { time: now, offset });
-        console.log(sql);
+        await api("setTime", { time: now, offset });
         this.handleMain();
     }
 
@@ -109,7 +108,7 @@ export default class Home extends Component {
                         end={{ x: 1, y: 1 }}
                         style={styles.button}>
                         {mode == 'off' ? <Icon name={mode == "off" ? "flame-outline" : "flame"} size={26} color="#fff" style={{ marginRight: 10 }} /> : <FastImage
-                            style={{ width: 100, height: 100, marginTop: 20 }}
+                            style={{ width: 26, height: 26, marginRight: 10 }}
                             source={require('./assets/running.gif')}
                             resizeMode={FastImage.resizeMode.contain}
                         />}
